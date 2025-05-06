@@ -44,9 +44,11 @@ function devseller_detect_city_display_city_based_on_ip()
 
     // Use the IP-API API to get location data
     $geo_url = "http://api.ip-api.com/{$user_ip}?access_key={$access_key}";  // API request with the API key
-
+    
+    
     //test
-    $geo_url = "http://members.ip-api.com/{$user_ip}?access_key={$access_key}";
+    $user_ip= "192.168.1.1";
+    $geo_url = "http://api.ip-api.com/{$user_ip}?access_key={$access_key}";
 
 
     // Fetch the location data
