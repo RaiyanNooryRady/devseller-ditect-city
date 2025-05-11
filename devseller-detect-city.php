@@ -39,33 +39,46 @@ function devseller_detect_city_display_city_based_on_ip()
     // Get the user's IP address
     $user_ip = devseller_detect_city_get_user_ip();
 
-    // Your paid IP-API API key (replace with your actual API key)
-    $access_key = 'C0tVbJx7gkIY0Jo';  // Replace with your API key from IP-API
+    // Check if we're on localhost
+    if ($user_ip === '127.0.0.1' || $user_ip === '::1' || strpos($user_ip, '192.168.') === 0) {
+        // For localhost testing, you can choose one of these options:
+        
+        // Option 1: Use a test city (uncomment one of these)
+        // return 'Berlin';
+        // return 'Munich';
+        // return 'Hamburg';
+        
+        // Option 2: Use a real public IP for testing (default)
+        $user_ip = '8.8.8.8'; // This will return "Mountain View"
+    }
+
+    // Your paid IP-API API key
+    $access_key = 'C0tVbJx7gkIY0Jo';
 
     // Use the IP-API API to get location data
-    $geo_url = "http://api.ip-api.com/{$user_ip}?access_key={$access_key}";  // API request with the API key
-    
-    
-    //test
-    $user_ip= "192.168.1.1";
-    $geo_url = "http://api.ip-api.com/{$user_ip}?access_key={$access_key}";
-
+    $geo_url = "https://pro.ip-api.com/csv/{$user_ip}?key={$access_key}&fields=city";
 
     // Fetch the location data
     $response = wp_remote_get($geo_url);
 
     if (is_wp_error($response)) {
-        return __('City not found', 'devseller-detect-city');  // Return a default message if the request fails
+        // Log the error for debugging
+        error_log('IP-API Error: ' . $response->get_error_message());
+        return __('City not found', 'devseller-detect-city');
     }
 
-    // Decode the response body
+    // Get the response body
     $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body, true);
-
-    // Check if city data is available
-    if (!empty($data['city'])) {
-        return $data['city'];  // Return the city name
+    
+    // The API returns CSV format, so we'll split it
+    $data = explode(',', $body);
+    
+    // Check if we got a valid response
+    if (!empty($data[0]) && $data[0] !== 'fail') {
+        return trim($data[0]); // Return the city name
     }
 
-    return __('City not found', 'devseller-detect-city');  // Return a default message if city is not found
+    // Log the invalid response for debugging
+    error_log('IP-API Invalid Response: ' . $body);
+    return __('City not found', 'devseller-detect-city');
 }
